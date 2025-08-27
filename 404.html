@@ -4,11 +4,9 @@
     <meta charset="UTF-8" />
     <title>Redirecting...</title>
     <script type="text/javascript">
-      // Capture the path from the URL
-      const path = window.location.pathname;
-
-      // Redirect to index.html, appending the path as a hash
-      window.location.replace('' + path);
+      const path = window.location.pathname + window.location.search + window.location.hash;
+      const baseUrl = '%PUBLIC_URL%';
+      window.location.replace(baseUrl + '/index.html' + path);
     </script>
   </head>
   <body>
