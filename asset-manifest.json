@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/dental-frontend/static/css/main.ad4bbdcc.css",
+    "main.js": "/dental-frontend/static/js/main.88b31cbc.js",
+    "static/js/453.15a75028.chunk.js": "/dental-frontend/static/js/453.15a75028.chunk.js",
+    "static/media/dental.jpeg": "/dental-frontend/static/media/dental.8a72a1a2c1fb2050d0e5.jpeg",
+    "index.html": "/dental-frontend/index.html",
+    "main.ad4bbdcc.css.map": "/dental-frontend/static/css/main.ad4bbdcc.css.map",
+    "main.88b31cbc.js.map": "/dental-frontend/static/js/main.88b31cbc.js.map",
+    "453.15a75028.chunk.js.map": "/dental-frontend/static/js/453.15a75028.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ad4bbdcc.css",
+    "static/js/main.88b31cbc.js"
+  ]
+}
