@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Table, Button, Container, Spinner, Alert, OverlayTrigger, Tooltip, Modal, Form } from 'react-bootstrap';
 import { FiEdit, FiTrash2, FiPlus, FiX } from 'react-icons/fi';
 import { fetchAppointments, createAppointment, updateAppointment, deleteAppointment, fetchAppointmentsByDentist } from '../utils/api/appointments';
-import { fetchStatus } from '../utils/api/status';
 import { fetchDentists } from '../utils/api/dentists';
 import { formatTimeLabel, generateTimeSlots, formatDate } from '../utils/time';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +10,6 @@ import { ConfirmModal } from '../components/FormModal';
 const Dashboard = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
-  const [status, setStatus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dentists, setDentists] = useState([]);
@@ -29,7 +27,8 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const now = new Date();
+  // ✅ Memoize current date/time so it's stable across renders
+  const now = useMemo(() => new Date(), []);
   const currentTimeStr = now.toTimeString().slice(0, 5);
 
   // Load appointments
@@ -46,37 +45,45 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
-  const loadStatus = async () => {
-    try { const data = await fetchStatus(); setStatus(data); } 
-    catch { console.error('Failed to load status'); }
-  };
-
   const loadDentists = async () => {
-    try { const data = await fetchDentists(); setDentists(data); } 
-    catch { console.error('Failed to load dentists'); }
+    try {
+      const data = await fetchDentists();
+      setDentists(data);
+    } catch {
+      console.error('Failed to load dentists');
+    }
   };
 
   useEffect(() => {
     const token = localStorage.getItem('user');
     if (!token) navigate('/login', { replace: true });
-    loadStatus();
     loadDentists();
   }, [navigate]);
 
-  useEffect(() => { loadAppointments(); }, [loadAppointments]);
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
 
   useEffect(() => {
     if (formData.dentist_id && formData.date) {
       fetchAppointmentsByDentist(formData.dentist_id, formData.date)
-        .then(data => setTimeFiltered(
-          data.filter(a => !editAppt || a.id !== editAppt.id).map(a => [a.timeFrom, a.timeTo])
-        ))
+        .then(data =>
+          setTimeFiltered(
+            data.filter(a => !editAppt || a.id !== editAppt.id).map(a => [a.timeFrom, a.timeTo])
+          )
+        )
         .catch(err => console.error(err));
     } else setTimeFiltered([]);
   }, [formData.dentist_id, formData.date, editAppt]);
 
   useEffect(() => {
-    if (editAppt) setFormData({ dentist_id: editAppt.dentist_id || '', date: editAppt.date || '', timeFrom: editAppt.timeFrom || '', timeTo: editAppt.timeTo || '' });
+    if (editAppt)
+      setFormData({
+        dentist_id: editAppt.dentist_id || '',
+        date: editAppt.date || '',
+        timeFrom: editAppt.timeFrom || '',
+        timeTo: editAppt.timeTo || '',
+      });
     else setFormData({ dentist_id: '', date: '', timeFrom: '', timeTo: '' });
   }, [editAppt]);
 
@@ -86,8 +93,17 @@ const Dashboard = () => {
     }
   }, [formData.timeFrom, formData.timeTo]);
 
-  const selectedDentist = useMemo(() => dentists.find(d => d.id === Number(formData.dentist_id)), [dentists, formData.dentist_id]);
-  const timeSlots = useMemo(() => selectedDentist ? generateTimeSlots(selectedDentist.availableStart || '09:00', selectedDentist.availableEnd || '17:00', 30) : [], [selectedDentist]);
+  const selectedDentist = useMemo(
+    () => dentists.find(d => d.id === Number(formData.dentist_id)),
+    [dentists, formData.dentist_id]
+  );
+  const timeSlots = useMemo(
+    () =>
+      selectedDentist
+        ? generateTimeSlots(selectedDentist.availableStart || '09:00', selectedDentist.availableEnd || '17:00', 30)
+        : [],
+    [selectedDentist]
+  );
 
   const availableTimeFrom = useMemo(() => {
     if (!formData.date || !formData.dentist_id) return [];
@@ -99,7 +115,9 @@ const Dashboard = () => {
 
   const availableTimeTo = useMemo(() => {
     if (!formData.timeFrom) return [];
-    return timeSlots.filter(t => t.value > formData.timeFrom && !timeFiltered.some(([start, end]) => formData.timeFrom < end && t.value > start));
+    return timeSlots.filter(
+      t => t.value > formData.timeFrom && !timeFiltered.some(([start, end]) => formData.timeFrom < end && t.value > start)
+    );
   }, [timeSlots, timeFiltered, formData.timeFrom]);
 
   // Clear form without closing modal
@@ -117,8 +135,23 @@ const Dashboard = () => {
       return;
     }
 
+    // 🚨 Prevent selecting past time if the date is today
+    const today = new Date().toISOString().split('T')[0];
+    if (formData.date === today && formData.timeFrom < currentTimeStr) {
+      setModalError('Start time cannot be in the past.');
+      return;
+    }
+
+    if (formData.timeFrom >= formData.timeTo) {
+      setModalError('End time must be later than start time.');
+      return;
+    }
+
     const overlaps = timeFiltered.some(([start, end]) => formData.timeFrom < end && formData.timeTo > start);
-    if (overlaps) { setModalError('Selected time conflicts with an existing appointment.'); return; }
+    if (overlaps) {
+      setModalError('Selected time conflicts with an existing appointment.');
+      return;
+    }
 
     try {
       if (editAppt) {
@@ -140,11 +173,16 @@ const Dashboard = () => {
     }
   };
 
-  const filteredAppointments = useMemo(() => appointments.filter(
-    a => a.dentist?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         a.status?.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         a.date?.includes(searchQuery)
-  ), [appointments, searchQuery]);
+  const filteredAppointments = useMemo(
+    () =>
+      appointments.filter(
+        a =>
+          a.dentist?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          a.status?.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          a.date?.includes(searchQuery)
+      ),
+    [appointments, searchQuery]
+  );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -163,7 +201,16 @@ const Dashboard = () => {
         <Button variant="outline-secondary" onClick={() => { setShowModal(true); clearForm(); }}>
           <FiPlus size={20} /> Schedule Appointment
         </Button>
-        <input type="text" className="form-control w-25" placeholder="Search by dentist, status" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }} />
+        <input
+          type="text"
+          className="form-control w-25"
+          placeholder="Search by dentist, status"
+          value={searchQuery}
+          onChange={e => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
       <Table hover>
@@ -177,78 +224,167 @@ const Dashboard = () => {
           </tr>
         </thead>
         <tbody className="text-center">
-          {currentAppointments.length === 0 ? <tr><td colSpan="7">No appointments found</td></tr> :
-            currentAppointments.map((appt, idx) => {
-              const rowClass = appt.status?.description === 'RESCHEDULED' ? 'table-primary' : appt.status?.description === 'CANCELLED' ? 'table-secondary' : 'table-light';
+          {currentAppointments.length === 0 ? (
+            <tr>
+              <td colSpan="7">No appointments found</td>
+            </tr>
+          ) : (
+            currentAppointments.map(appt => {
+              const rowClass =
+                appt.status?.description === 'RESCHEDULED'
+                  ? 'table-primary'
+                  : appt.status?.description === 'CANCELLED'
+                  ? 'table-secondary'
+                  : 'table-light';
               return (
                 <tr key={appt.id} className={rowClass}>
                   <td>{appt.dentist?.name || 'Unknown'}</td>
                   <td>{appt.status?.description || 'Unknown'}</td>
                   <td>{formatDate(appt.date)}</td>
-                  <td colSpan="2">{formatTimeLabel(appt.timeFrom)} - {formatTimeLabel(appt.timeTo)}</td>
+                  <td colSpan="2">
+                    {formatTimeLabel(appt.timeFrom)} - {formatTimeLabel(appt.timeTo)}
+                  </td>
                   <td className="d-flex justify-content-center gap-2">
                     {appt.status?.description !== 'CANCELLED' && (
                       <OverlayTrigger placement="top" overlay={<Tooltip>Edit Appointment</Tooltip>}>
-                        <Button variant="link" size="sm" onClick={() => { setEditAppt(appt); setShowModal(true); setModalError(''); }}><FiEdit size={20} /></Button>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={() => {
+                            setEditAppt(appt);
+                            setShowModal(true);
+                            setModalError('');
+                          }}
+                        >
+                          <FiEdit size={20} />
+                        </Button>
                       </OverlayTrigger>
                     )}
                     {appt.status_id !== 2 && (
                       <OverlayTrigger placement="top" overlay={<Tooltip>Cancel Appointment</Tooltip>}>
-                        <Button variant="link" size="sm" className="text-warning" onClick={() => { setApptToCancel(appt); setShowCancelModal(true); }}><FiX size={22} /></Button>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="text-warning"
+                          onClick={() => {
+                            setApptToCancel(appt);
+                            setShowCancelModal(true);
+                          }}
+                        >
+                          <FiX size={22} />
+                        </Button>
                       </OverlayTrigger>
                     )}
                     <OverlayTrigger placement="top" overlay={<Tooltip>Delete Appointment</Tooltip>}>
-                      <Button variant="link" size="sm" className="text-danger" onClick={() => { setApptToDelete(appt); setShowDeleteModal(true); }}><FiTrash2 size={20} /></Button>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="text-danger"
+                        onClick={() => {
+                          setApptToDelete(appt);
+                          setShowDeleteModal(true);
+                        }}
+                      >
+                        <FiTrash2 size={20} />
+                      </Button>
                     </OverlayTrigger>
                   </td>
                 </tr>
               );
             })
-          }
+          )}
         </tbody>
       </Table>
 
       <div className="d-flex justify-content-center mt-3">
-        <Button variant="secondary" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</Button>
-        <span className="mx-3">Page {currentPage} of {totalPages}</span>
-        <Button variant="secondary" size="sm" disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => p + 1)}>Next</Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(p => p - 1)}
+        >
+          Prev
+        </Button>
+        <span className="mx-3">
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage === totalPages || totalPages === 0}
+          onClick={() => setCurrentPage(p => p + 1)}
+        >
+          Next
+        </Button>
       </div>
 
       {/* Inline Form Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Header closeButton><Modal.Title>{editAppt ? 'Edit Appointment' : 'Add Appointment'}</Modal.Title></Modal.Header>
+        <Modal.Header closeButton>
+          <Modal.Title>{editAppt ? 'Edit Appointment' : 'Add Appointment'}</Modal.Title>
+        </Modal.Header>
         <Modal.Body>
           {modalError && <Alert variant="danger">{modalError}</Alert>}
           <Form>
             <Form.Group className="mb-2">
               <Form.Label>Dentist</Form.Label>
-              <Form.Select value={formData.dentist_id} onChange={e => setFormData(prev => ({ ...prev, dentist_id: e.target.value }))}>
+              <Form.Select
+                value={formData.dentist_id}
+                onChange={e => setFormData(prev => ({ ...prev, dentist_id: e.target.value }))}
+              >
                 <option value="">Select dentist</option>
-                {dentists.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                {dentists.map(d => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Date</Form.Label>
-              <Form.Control type="date" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))} />
+              <Form.Control
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                value={formData.date}
+                onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+              />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Schedule</Form.Label>
               <div className="d-flex gap-2">
-                <Form.Select value={formData.timeFrom} onChange={e => setFormData(prev => ({ ...prev, timeFrom: e.target.value, timeTo: '' }))}>
+                <Form.Select
+                  value={formData.timeFrom}
+                  onChange={e => setFormData(prev => ({ ...prev, timeFrom: e.target.value, timeTo: '' }))}
+                >
                   <option value="">Select Time From</option>
-                  {availableTimeFrom.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  {availableTimeFrom.map(t => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
                 </Form.Select>
-                <Form.Select value={formData.timeTo} onChange={e => setFormData(prev => ({ ...prev, timeTo: e.target.value }))}>
+                <Form.Select
+                  value={formData.timeTo}
+                  onChange={e => setFormData(prev => ({ ...prev, timeTo: e.target.value }))}
+                >
                   <option value="">Select Time To</option>
-                  {availableTimeTo.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  {availableTimeTo.map(t => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
                 </Form.Select>
               </div>
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={clearForm}>Clear Form</Button>
-          <Button variant="primary" onClick={handleModalSubmit}>{editAppt ? 'Update' : 'Save'}</Button>
+          <Button variant="secondary" onClick={clearForm}>
+            Clear Form
+          </Button>
+          <Button variant="primary" onClick={handleModalSubmit}>
+            {editAppt ? 'Update' : 'Save'}
+          </Button>
         </Modal.Footer>
       </Modal>
 
