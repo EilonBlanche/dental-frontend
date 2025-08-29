@@ -364,6 +364,7 @@ const Dashboard = () => {
                 min={minDate} 
                 value={formData.date}
                 onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
               />
             </Form.Group>
             <Form.Group className="mb-2">
