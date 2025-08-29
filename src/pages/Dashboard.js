@@ -352,7 +352,7 @@ const Dashboard = () => {
                 <option value="">Select dentist</option>
                 {dentists.map(d => (
                   <option key={d.id} value={d.id}>
-                    {d.name}
+                    {d.name} - {d.specialization}
                   </option>
                 ))}
               </Form.Select>
