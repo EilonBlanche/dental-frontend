@@ -114,30 +114,47 @@ const Users = () => {
         <FiPlus /> Create User
       </Button>
 
-      <Table hover className="mt-3">
+      <Table hover className="mt-3 text-center">
         <thead>
-          <tr><th>Name</th><th>Email</th><th>Admin</th><th>Actions</th></tr>
+          <tr>
+            <th className="text-center">Name</th>
+            <th className="text-center">Email</th>
+            <th className="text-center">Admin</th>
+            <th className="text-center">Actions</th>
+          </tr>
         </thead>
         <tbody>
           {users.length === 0 ? (
-            <tr><td colSpan="4" className="text-center">No users found</td></tr>
+            <tr>
+              <td colSpan="4" className="text-center">No users found</td>
+            </tr>
           ) : (
             users.map(u => (
               <tr key={u.id}>
-                <td>{u.name}</td>
-                <td>{u.email}</td>
-                <td>{u.isAdmin ? '✓' : '✗'}</td>
-                <td>
-                  <Button variant="link" onClick={() => openForm(u)}><FiEdit size={20} /></Button>
-                  <Button variant="link" onClick={() => { setUserToDelete(u); setShowDeleteModal(true); }}>
-                    <FiTrash2 size={20} className="text-danger" />
-                  </Button>
+                <td className="align-middle">{u.name}</td>
+                <td className="align-middle">{u.email}</td>
+                <td className="align-middle">{u.isAdmin ? '✓' : '✗'}</td>
+                <td className="align-middle">
+                  <div className="d-flex justify-content-center gap-2">
+                    {
+                      u.email !== 'eilonblanche23@gmail.com' ? 
+                      <>
+                        <Button variant="link" onClick={() => openForm(u)}>
+                          <FiEdit size={20} />
+                        </Button>
+                        <Button variant="link" onClick={() => { setUserToDelete(u); setShowDeleteModal(true); }}>
+                          <FiTrash2 size={20} className="text-danger" />
+                        </Button>
+                      </> : null
+                    }
+                  </div>
                 </td>
               </tr>
             ))
           )}
         </tbody>
       </Table>
+
 
       <FormModal
         show={showForm}
