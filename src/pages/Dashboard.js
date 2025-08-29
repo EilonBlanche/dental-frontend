@@ -27,7 +27,13 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // ✅ Memoize current date/time so it's stable across renders
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const minDate = `${yyyy}-${mm}-${dd}`; // YYYY-MM-DD
+
+  // Memoize current date/time so it's stable across renders
   const now = useMemo(() => new Date(), []);
   const currentTimeStr = now.toTimeString().slice(0, 5);
 
@@ -130,23 +136,35 @@ const Dashboard = () => {
   const handleModalSubmit = async () => {
     setModalError('');
 
+    // Ensure all fields are filled
     if (!formData.dentist_id || !formData.date || !formData.timeFrom || !formData.timeTo) {
       setModalError('Please fill in all fields.');
       return;
     }
 
-    // 🚨 Prevent selecting past time if the date is today
-    const today = new Date().toISOString().split('T')[0];
-    if (formData.date === today && formData.timeFrom < currentTimeStr) {
+    // Prevent selecting a past date
+    const selectedDate = new Date(formData.date);
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0); // reset time portion
+    if (selectedDate < todayDate) {
+      setModalError('Cannot select a past date.');
+      return;
+    }
+
+    // Prevent selecting past time if the date is today
+    const currentTimeStr = new Date().toTimeString().slice(0, 5);
+    if (formData.date === minDate && formData.timeFrom < currentTimeStr) {
       setModalError('Start time cannot be in the past.');
       return;
     }
 
+    // Ensure timeFrom < timeTo
     if (formData.timeFrom >= formData.timeTo) {
       setModalError('End time must be later than start time.');
       return;
     }
 
+    // Check for overlapping appointments
     const overlaps = timeFiltered.some(([start, end]) => formData.timeFrom < end && formData.timeTo > start);
     if (overlaps) {
       setModalError('Selected time conflicts with an existing appointment.');
@@ -155,7 +173,6 @@ const Dashboard = () => {
 
     try {
       if (editAppt) {
-        // Mark updated appointment as RESCHEDULED
         await updateAppointment(editAppt.id, { ...formData, status_id: 3 });
       } else {
         await createAppointment(formData);
@@ -166,12 +183,12 @@ const Dashboard = () => {
       setFormData({ dentist_id: '', date: '', timeFrom: '', timeTo: '' });
       setSuccessMsg('Appointment saved successfully!');
       setTimeout(() => setSuccessMsg(''), 3000);
-
       loadAppointments();
     } catch (err) {
       setModalError(err.response?.data?.message || 'Failed to save appointment');
     }
   };
+
 
   const filteredAppointments = useMemo(
     () =>
@@ -344,7 +361,7 @@ const Dashboard = () => {
               <Form.Label>Date</Form.Label>
               <Form.Control
                 type="date"
-                min={new Date().toISOString().split('T')[0]}
+                min={minDate} 
                 value={formData.date}
                 onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
               />
