@@ -173,7 +173,18 @@ const Dashboard = () => {
 
     try {
       if (editAppt) {
-        await updateAppointment(editAppt.id, { ...formData, status_id: 3 });
+        // Only mark as RESCHEDULED if dentist, date, or time changed
+        const isChanged =
+          editAppt.dentist_id !== Number(formData.dentist_id) ||
+          editAppt.date !== formData.date ||
+          editAppt.timeFrom !== formData.timeFrom ||
+          editAppt.timeTo !== formData.timeTo;
+
+        const updatedData = { ...formData };
+        if (isChanged) updatedData.status_id = 3; // RESCHEDULED
+        else delete updatedData.status_id; // keep original status
+
+        await updateAppointment(editAppt.id, updatedData);
       } else {
         await createAppointment(formData);
       }
@@ -188,7 +199,6 @@ const Dashboard = () => {
       setModalError(err.response?.data?.message || 'Failed to save appointment');
     }
   };
-
 
   const filteredAppointments = useMemo(
     () =>
