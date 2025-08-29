@@ -63,6 +63,7 @@ const Users = () => {
         await updateUser(editUser.id, dataToUpdate);
         setSuccessMessage('User updated successfully!');
       } else {
+        console.log(formData);
         await createUser(formData);
         setSuccessMessage('User created successfully!');
       }
@@ -97,7 +98,7 @@ const Users = () => {
     { label: 'Name', name: 'name', type: 'text', required: true },
     { label: 'Email', name: 'email', type: 'email', required: true },
     ...(!editUser ? [{ label: 'Password', name: 'password', type: 'password', required: true }] : []),
-    { label: 'Admin', name: 'isAdmin', type: 'checkbox' },
+    ...(editUser ? [{ label: 'Admin', name: 'isAdmin', type: 'checkbox' }] : []),
   ];
 
   if (loading) return <Spinner animation="border" />;
