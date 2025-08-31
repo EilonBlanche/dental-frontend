@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Table, Button, Container, Spinner, Alert, OverlayTrigger, Tooltip, Modal, Form } from 'react-bootstrap';
-import { FiEdit, FiTrash2, FiPlus, FiX } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiX, FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { fetchAppointments, createAppointment, updateAppointment, deleteAppointment, fetchAppointmentsByDentist } from '../utils/api/appointments';
 import { fetchDentists } from '../utils/api/dentists';
 import { formatTimeLabel, generateTimeSlots, formatDate } from '../utils/time';
@@ -27,17 +27,17 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'asc' });
+
   const today = new Date();
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
   const minDate = `${yyyy}-${mm}-${dd}`; // YYYY-MM-DD
 
-  // Memoize current date/time so it's stable across renders
   const now = useMemo(() => new Date(), []);
   const currentTimeStr = now.toTimeString().slice(0, 5);
 
-  // Load appointments
   const loadAppointments = useCallback(async () => {
     setLoading(true);
     try {
@@ -103,6 +103,7 @@ const Dashboard = () => {
     () => dentists.find(d => d.id === Number(formData.dentist_id)),
     [dentists, formData.dentist_id]
   );
+
   const timeSlots = useMemo(
     () =>
       selectedDentist
@@ -126,7 +127,6 @@ const Dashboard = () => {
     );
   }, [timeSlots, timeFiltered, formData.timeFrom]);
 
-  // Clear form without closing modal
   const clearForm = () => {
     setEditAppt(null);
     setFormData({ dentist_id: '', date: '', timeFrom: '', timeTo: '' });
@@ -136,35 +136,30 @@ const Dashboard = () => {
   const handleModalSubmit = async () => {
     setModalError('');
 
-    // Ensure all fields are filled
     if (!formData.dentist_id || !formData.date || !formData.timeFrom || !formData.timeTo) {
       setModalError('Please fill in all fields.');
       return;
     }
 
-    // Prevent selecting a past date
     const selectedDate = new Date(formData.date);
     const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0); // reset time portion
+    todayDate.setHours(0, 0, 0, 0);
     if (selectedDate < todayDate) {
       setModalError('Cannot select a past date.');
       return;
     }
 
-    // Prevent selecting past time if the date is today
     const currentTimeStr = new Date().toTimeString().slice(0, 5);
     if (formData.date === minDate && formData.timeFrom < currentTimeStr) {
       setModalError('Start time cannot be in the past.');
       return;
     }
 
-    // Ensure timeFrom < timeTo
     if (formData.timeFrom >= formData.timeTo) {
       setModalError('End time must be later than start time.');
       return;
     }
 
-    // Check for overlapping appointments
     const overlaps = timeFiltered.some(([start, end]) => formData.timeFrom < end && formData.timeTo > start);
     if (overlaps) {
       setModalError('Selected time conflicts with an existing appointment.');
@@ -173,7 +168,6 @@ const Dashboard = () => {
 
     try {
       if (editAppt) {
-        // Only mark as RESCHEDULED if dentist, date, or time changed
         const isChanged =
           editAppt.dentist_id !== Number(formData.dentist_id) ||
           editAppt.date !== formData.date ||
@@ -182,7 +176,7 @@ const Dashboard = () => {
 
         const updatedData = { ...formData };
         if (isChanged) updatedData.status_id = 3; // RESCHEDULED
-        else delete updatedData.status_id; // keep original status
+        else delete updatedData.status_id;
 
         await updateAppointment(editAppt.id, updatedData);
       } else {
@@ -211,10 +205,57 @@ const Dashboard = () => {
     [appointments, searchQuery]
   );
 
+  const sortedAppointments = useMemo(() => {
+    const sortable = [...filteredAppointments];
+    sortable.sort((a, b) => {
+      let valA, valB;
+      switch (sortConfig.key) {
+        case 'dentist':
+          valA = a.dentist?.name || '';
+          valB = b.dentist?.name || '';
+          break;
+        case 'specialization':
+          valA = a.dentist?.specialization || '';
+          valB = b.dentist?.specialization || '';
+          break;
+        case 'status':
+          valA = a.status?.description || '';
+          valB = b.status?.description || '';
+          break;
+        case 'date':
+          valA = a.date || '';
+          valB = b.date || '';
+          break;
+        case 'time':
+          valA = a.timeFrom || '';
+          valB = b.timeFrom || '';
+          break;
+        default:
+          valA = '';
+          valB = '';
+      }
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return sortable;
+  }, [filteredAppointments, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIcon = (key) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'asc' ? <FiChevronUp /> : <FiChevronDown />;
+  };
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentAppointments = filteredAppointments.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const currentAppointments = sortedAppointments.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedAppointments.length / itemsPerPage);
 
   if (loading) return <Spinner animation="border" />;
 
@@ -233,22 +274,30 @@ const Dashboard = () => {
           className="form-control w-25"
           placeholder="Search by dentist, status"
           value={searchQuery}
-          onChange={e => {
-            setSearchQuery(e.target.value);
-            setCurrentPage(1);
-          }}
+          onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
         />
       </div>
+
       <div className="table-responsive">
         <Table hover>
           <thead className="text-center">
             <tr>
-              <th>Dentist</th>
-              <th>Specialization</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('dentist')}>
+                Dentist {renderSortIcon('dentist')}
+              </th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('specialization')}>
+                Specialization {renderSortIcon('specialization')}
+              </th>
               <th>Email</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th colSpan="2">Schedule</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('status')}>
+                Status {renderSortIcon('status')}
+              </th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('date')}>
+                Date {renderSortIcon('date')}
+              </th>
+              <th colSpan="2" style={{ cursor: 'pointer' }} onClick={() => requestSort('time')}>
+                Schedule {renderSortIcon('time')}
+              </th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -282,11 +331,7 @@ const Dashboard = () => {
                             <Button
                               variant="link"
                               size="sm"
-                              onClick={() => {
-                                setEditAppt(appt);
-                                setShowModal(true);
-                                setModalError('');
-                              }}
+                              onClick={() => { setEditAppt(appt); setShowModal(true); setModalError(''); }}
                             >
                               <FiEdit size={20} />
                             </Button>
@@ -298,10 +343,7 @@ const Dashboard = () => {
                               variant="link"
                               size="sm"
                               className="text-warning"
-                              onClick={() => {
-                                setApptToCancel(appt);
-                                setShowCancelModal(true);
-                              }}
+                              onClick={() => { setApptToCancel(appt); setShowCancelModal(true); }}
                             >
                               <FiX size={22} />
                             </Button>
@@ -312,10 +354,7 @@ const Dashboard = () => {
                             variant="link"
                             size="sm"
                             className="text-danger"
-                            onClick={() => {
-                              setApptToDelete(appt);
-                              setShowDeleteModal(true);
-                            }}
+                            onClick={() => { setApptToDelete(appt); setShowDeleteModal(true); }}
                           >
                             <FiTrash2 size={20} />
                           </Button>
@@ -327,10 +366,8 @@ const Dashboard = () => {
               })
             )}
           </tbody>
-
-        </Table>  
+        </Table>
       </div>
-
 
       <div className="d-flex justify-content-center mt-3">
         <Button
@@ -380,10 +417,10 @@ const Dashboard = () => {
               <Form.Label>Date</Form.Label>
               <Form.Control
                 type="date"
-                min={minDate} 
+                min={minDate}
                 value={formData.date}
                 onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                  onKeyDown={e => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
+                onKeyDown={e => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -395,9 +432,7 @@ const Dashboard = () => {
                 >
                   <option value="">Select Time From</option>
                   {availableTimeFrom.map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
+                    <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </Form.Select>
                 <Form.Select
@@ -406,9 +441,7 @@ const Dashboard = () => {
                 >
                   <option value="">Select Time To</option>
                   {availableTimeTo.map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
+                    <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </Form.Select>
               </div>
@@ -416,12 +449,8 @@ const Dashboard = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={clearForm}>
-            Clear Form
-          </Button>
-          <Button variant="primary" onClick={handleModalSubmit}>
-            {editAppt ? 'Update' : 'Save'}
-          </Button>
+          <Button variant="secondary" onClick={clearForm}>Clear Form</Button>
+          <Button variant="primary" onClick={handleModalSubmit}>{editAppt ? 'Update' : 'Save'}</Button>
         </Modal.Footer>
       </Modal>
 

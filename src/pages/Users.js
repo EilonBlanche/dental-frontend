@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Table, Button, Container, Spinner, Alert } from 'react-bootstrap';
 import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi';
 import { fetchUsers, createUser, updateUser, deleteUser } from '../utils/api/users';
@@ -17,6 +17,9 @@ const Users = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+
+  // Sorting state
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
 
   const loadUsers = async () => {
     setLoading(true);
@@ -38,7 +41,7 @@ const Users = () => {
       setFormData({
         name: user.name || '',
         email: user.email || '',
-        password: '',       // password empty when editing
+        password: '',
         isAdmin: !!user.isAdmin
       });
       setEditUser(user);
@@ -59,11 +62,10 @@ const Users = () => {
     try {
       if (editUser) {
         const dataToUpdate = { ...formData };
-        delete dataToUpdate.password; // don’t update password if empty
+        if (!dataToUpdate.password) delete dataToUpdate.password; // don’t update password if empty
         await updateUser(editUser.id, dataToUpdate);
         setSuccessMessage('User updated successfully!');
       } else {
-        console.log(formData);
         await createUser(formData);
         setSuccessMessage('User created successfully!');
       }
@@ -101,6 +103,35 @@ const Users = () => {
     ...(editUser ? [{ label: 'Admin', name: 'isAdmin', type: 'checkbox' }] : []),
   ];
 
+  // Sorting function
+  const sortedUsers = useMemo(() => {
+    let sortableUsers = [...users];
+    if (sortConfig.key) {
+      sortableUsers.sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+        if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+        if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableUsers;
+  }, [users, sortConfig]);
+
+  const requestSort = key => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = key => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'asc' ? ' ▲' : ' ▼';
+  };
+
   if (loading) return <Spinner animation="border" />;
 
   return (
@@ -113,31 +144,37 @@ const Users = () => {
       <Button variant="outline-secondary" onClick={() => openForm()}>
         <FiPlus /> Create User
       </Button>
+
       <div className='table-responsive'>
         <Table hover className="mt-3 text-center">
           <thead>
             <tr>
-              <th className="text-center">Name</th>
-              <th className="text-center">Email</th>
-              <th className="text-center">Admin</th>
-              <th className="text-center">Actions</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('name')}>
+                Name{getSortIcon('name')}
+              </th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('email')}>
+                Email{getSortIcon('email')}
+              </th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('isAdmin')}>
+                Admin{getSortIcon('isAdmin')}
+              </th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.length === 0 ? (
+            {sortedUsers.length === 0 ? (
               <tr>
                 <td colSpan="4" className="text-center">No users found</td>
               </tr>
             ) : (
-              users.map(u => (
+              sortedUsers.map(u => (
                 <tr key={u.id}>
                   <td className="align-middle">{u.name}</td>
                   <td className="align-middle">{u.email}</td>
                   <td className="align-middle">{u.isAdmin ? '✓' : '✗'}</td>
                   <td className="align-middle">
                     <div className="d-flex justify-content-center gap-2">
-                      {
-                        u.email !== 'eilonblanche23@gmail.com' ? 
+                      {u.email !== 'eilonblanche23@gmail.com' && (
                         <>
                           <Button variant="link" onClick={() => openForm(u)}>
                             <FiEdit size={20} />
@@ -145,8 +182,8 @@ const Users = () => {
                           <Button variant="link" onClick={() => { setUserToDelete(u); setShowDeleteModal(true); }}>
                             <FiTrash2 size={20} className="text-danger" />
                           </Button>
-                        </> : null
-                      }
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -155,7 +192,6 @@ const Users = () => {
           </tbody>
         </Table>
       </div>
-
 
       <FormModal
         show={showForm}

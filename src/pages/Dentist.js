@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Table, Button, Container, Spinner, Alert } from 'react-bootstrap';
-import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { fetchDentists, createDentist, updateDentist, deleteDentist } from '../utils/api/dentists';
 import { FormModal, ConfirmModal } from '../components/FormModal';
 import { generateTimeSlots, formatTimeLabel } from '../utils/time';
@@ -18,6 +18,9 @@ const Dentists = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [dentistToDelete, setDentistToDelete] = useState(null);
+
+  // Sorting state
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
 
   // Load dentists
   const loadDentists = async () => {
@@ -74,10 +77,7 @@ const Dentists = () => {
       setFormData({ name: '', email: '', specialization: '', availableStart: '', availableEnd: '' });
       setFormError('');
       loadDentists();
-
-      // Hide success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
-
     } catch (err) {
       setFormError(err.response?.data?.message || 'Failed to save dentist');
     }
@@ -114,7 +114,33 @@ const Dentists = () => {
     }
   ];
 
+  // Handle sorting
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedDentists = useMemo(() => {
+    const sortable = [...dentists];
+    sortable.sort((a, b) => {
+      const valA = a[sortConfig.key] || '';
+      const valB = b[sortConfig.key] || '';
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return sortable;
+  }, [dentists, sortConfig]);
+
   if (loading) return <Spinner animation="border" />;
+
+  const renderSortIcon = (key) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'asc' ? <FiChevronUp /> : <FiChevronDown />;
+  };
 
   return (
     <Container className="mt-4">
@@ -122,30 +148,34 @@ const Dentists = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-      <Button
-        variant="outline-secondary"
-        onClick={() => openForm()}
-      >
+      <Button variant="outline-secondary" onClick={() => openForm()}>
         <FiPlus /> Create Dentist
       </Button>
-      <div className="table-responsive">
-        <Table hover className="mt-3 text-center">
+
+      <div className="table-responsive mt-3">
+        <Table hover className="text-center">
           <thead>
             <tr>
-              <th className="text-center">Name</th>
-              <th className="text-center">Email</th>
-              <th className="text-center">Specialization</th>
-              <th className="text-center">Schedule</th>
-              <th className="text-center">Actions</th>
+              <th onClick={() => requestSort('name')} style={{ cursor: 'pointer' }}>
+                Name {renderSortIcon('name')}
+              </th>
+              <th onClick={() => requestSort('email')} style={{ cursor: 'pointer' }}>
+                Email {renderSortIcon('email')}
+              </th>
+              <th onClick={() => requestSort('specialization')} style={{ cursor: 'pointer' }}>
+                Specialization {renderSortIcon('specialization')}
+              </th>
+              <th>Schedule</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {dentists.length === 0 ? (
+            {sortedDentists.length === 0 ? (
               <tr>
                 <td colSpan="5" className="text-center">No dentists found</td>
               </tr>
             ) : (
-              dentists.map(d => (
+              sortedDentists.map(d => (
                 <tr key={d.id}>
                   <td className="align-middle">{d.name}</td>
                   <td className="align-middle">{d.email || '-'}</td>
@@ -172,8 +202,6 @@ const Dentists = () => {
         </Table>
       </div>
 
-
-      {/* Form Modal */}
       <FormModal
         show={showForm}
         handleClose={() => { setShowForm(false); setEditDentist(null); setFormError(''); }}
@@ -185,7 +213,6 @@ const Dentists = () => {
         formFields={formFields}
       />
 
-      {/* Delete Confirmation */}
       <ConfirmModal
         show={showDeleteModal}
         handleClose={() => { setShowDeleteModal(false); setDentistToDelete(null); }}
