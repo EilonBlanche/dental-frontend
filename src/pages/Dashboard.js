@@ -275,7 +275,7 @@ const Dashboard = () => {
                     <td colSpan="2">
                       {formatTimeLabel(appt.timeFrom)} - {formatTimeLabel(appt.timeTo)}
                     </td>
-                    <td className="d-flex flex-wrap justify-content-center gap-2">
+                    <td className="d-flex flex-column justify-content-center align-items-stretch gap-2 h-100">
                       {appt.status?.description !== 'CANCELLED' && (
                         <OverlayTrigger placement="top" overlay={<Tooltip>Edit Appointment</Tooltip>}>
                           <Button
