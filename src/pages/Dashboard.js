@@ -281,7 +281,10 @@ const Dashboard = () => {
       <div className="table-responsive">
         <Table hover>
           <thead className="text-center">
-            <tr>
+            <tr>              
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('name')}>
+                Booked By {renderSortIcon('name')}
+              </th>
               <th style={{ cursor: 'pointer' }} onClick={() => requestSort('dentist')}>
                 Dentist {renderSortIcon('dentist')}
               </th>
@@ -316,6 +319,7 @@ const Dashboard = () => {
                     : 'table-light';
                 return (
                   <tr key={appt.id} className={rowClass}>
+                    <td className="align-middle">{appt.user?.name}</td>
                     <td className="align-middle">{appt.dentist?.name}</td>
                     <td className="align-middle">{appt.dentist?.specialization}</td>
                     <td className="align-middle">{appt.dentist?.email}</td>
