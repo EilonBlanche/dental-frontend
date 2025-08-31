@@ -1,70 +1,81 @@
-# Getting Started with Create React App
+# Dental Appointment Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
+This is the **frontend application** for a dental appointment booking system. Built with **React** and **Bootstrap**, it provides a responsive and intuitive interface for users to schedule dental checkups easily.
 
-## Available Scripts
+**Live Demo:** [https://genuine-piroshki-e21886.netlify.app/](https://genuine-piroshki-e21886.netlify.app/)
 
-In the project directory, you can run:
+## Features
+- Book dental appointments through a clean, user-friendly interface
+- View available dates and time slots
+- Responsive design for desktop and mobile devices
+- Form validation for appointment details
+- Integration-ready for backend APIs
 
-### `npm start`
+## Technologies Used
+- **Framework/Library:** React
+- **Styling:** Bootstrap
+- **Routing:** React Router
+- **Other Tools:** Axios, ESLint
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Installation
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/EilonBlanche/dental-frontend.git
+    ```
+2. Navigate to the project directory:
+    ```bash
+    cd dental-frontend
+    ```
+3. Install dependencies:
+    ```bash
+    npm install
+    ```
+4. Run the application:
+    ```bash
+    npm start
+    ```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+## Login Page
+<img width="1900" height="947" alt="image" src="https://github.com/user-attachments/assets/07a5a18f-bb49-4795-8951-75de39ae9244" />
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Users can log in with their email and password using this form.
+- Use these test credentials to log in:
 
-### `npm run build`
+| Role  | Email             | Password   |
+|-------|-----------------|------------  |
+| Admin | test@admin.com   | Test12345.  |
+| User  | test@user.com    | Test12345.  |
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Register Page
+<img width="1903" height="945" alt="image" src="https://github.com/user-attachments/assets/4eac7372-7bb0-43f1-9e93-a5b44845a1f3" />
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- This page handles user registration, allowing new users to create an account with their name, email and password.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Dashboard Page
+<img width="1919" height="946" alt="image" src="https://github.com/user-attachments/assets/504ecc73-7570-4096-9391-386281580e48" />
 
-### `npm run eject`
+- Allows users to **view**, **create**, **update**, and **delete** appointments with specific dentists based on their availability for the day.
+- Click the **Schedule Appointment** button to create a new appointment.
+- Click the **pencil** icon to edit an appointment.
+- Click the **x** icon to cancel an appointment.
+- Click the **trash** to delete an appointment.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Creating Appointments
+<img width="1919" height="942" alt="image" src="https://github.com/user-attachments/assets/28649841-a43f-44c5-ae8c-217df50d6f08" />
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- Fill in fields such as *Dentist*, *Date* and *Schedule* to create appointment details.
+- Click **Save** to save appointment.
+- Click **Clear Form** to clear all input fields.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Updating Appointments
+<img width="1919" height="940" alt="image" src="https://github.com/user-attachments/assets/6baa35f9-3040-4030-9559-7f8671919476" />
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Update fields such as *Dentist*, *Date* and *Schedule* to update appointment details.
+- Click **Save** to save appointment.
+- Click **Clear Form** to clear all input fields.
+- Allows rescheduling and **cancelling** of appointments.
+  	- Appointment is automatically **CONFIRMED** once it is created successfully. The updated scheduled booked can't be booked by another user.
+  	- Appointment becomes **RESCHEDULED** once date and time has been changed. The updated scheduled booked can't be booked by another user.
+  	- Appointment can be **CANCELLED**. Once an appointment is cancelled or deleted, timeslot for the cancelled appointment becomes available for other users.
