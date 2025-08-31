@@ -36,16 +36,16 @@ const Register = () => {
   };
 
   return (
-    <Container className="d-flex vh-100 justify-content-center align-items-center">
-      <Row>
-        <Col>
-          <Card style={{ width: '500px' }} className="p-4 shadow-sm">
+    <Container className="d-flex vh-100 justify-content-center align-items-center px-2">
+      <Row className='w-100 justify-content-center'>
+        <Col xs={12} sm={10} md={8} lg={6} xl={4}>
+          <Card className="p-4 shadow-sm">
             <Image
               src={toothImage}
-              style={{ maxWidth: '200px', width: '100%', height: 'auto' }}
               fluid
               rounded
-              className="mb-3 d-block mx-auto"
+              className="mb-3 mx-auto d-block"
+              style={{ maxWidth: '150px', height: 'auto' }}
             />
             <Card.Body>
               <h3 className="text-center mb-4">Register</h3>
