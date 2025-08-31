@@ -239,93 +239,95 @@ const Dashboard = () => {
           }}
         />
       </div>
-
-      <Table hover>
-        <thead className="text-center">
-          <tr>
-            <th>Dentist</th>
-            <th>Specialization</th>
-            <th>Email</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th colSpan="2">Schedule</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody className="text-center">
-          {currentAppointments.length === 0 ? (
+      <div className="table-responsive">
+        <Table hover>
+          <thead className="text-center">
             <tr>
-              <td colSpan="7">No appointments found</td>
+              <th>Dentist</th>
+              <th>Specialization</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th colSpan="2">Schedule</th>
+              <th>Actions</th>
             </tr>
-          ) : (
-            currentAppointments.map(appt => {
-              const rowClass =
-                appt.status?.description === 'RESCHEDULED'
-                  ? 'table-primary'
-                  : appt.status?.description === 'CANCELLED'
-                  ? 'table-secondary'
-                  : 'table-light';
-              return (
-                <tr key={appt.id} className={rowClass}>
-                  <td>{appt.dentist?.name}</td>
-                  <td>{appt.dentist?.specialization}</td>
-                  <td>{appt.dentist?.email}</td>
-                  <td>{appt.status?.description || 'Unknown'}</td>
-                  <td>{formatDate(appt.date)}</td>
-                  <td colSpan="2">
-                    {formatTimeLabel(appt.timeFrom)} - {formatTimeLabel(appt.timeTo)}
-                  </td>
-                  <td className="d-flex justify-content-center gap-2">
-                    {appt.status?.description !== 'CANCELLED' && (
-                      <OverlayTrigger placement="top" overlay={<Tooltip>Edit Appointment</Tooltip>}>
+          </thead>
+          <tbody className="text-center">
+            {currentAppointments.length === 0 ? (
+              <tr>
+                <td colSpan="7">No appointments found</td>
+              </tr>
+            ) : (
+              currentAppointments.map(appt => {
+                const rowClass =
+                  appt.status?.description === 'RESCHEDULED'
+                    ? 'table-primary'
+                    : appt.status?.description === 'CANCELLED'
+                    ? 'table-secondary'
+                    : 'table-light';
+                return (
+                  <tr key={appt.id} className={rowClass}>
+                    <td>{appt.dentist?.name}</td>
+                    <td>{appt.dentist?.specialization}</td>
+                    <td>{appt.dentist?.email}</td>
+                    <td>{appt.status?.description || 'Unknown'}</td>
+                    <td>{formatDate(appt.date)}</td>
+                    <td colSpan="2">
+                      {formatTimeLabel(appt.timeFrom)} - {formatTimeLabel(appt.timeTo)}
+                    </td>
+                    <td className="d-flex justify-content-center gap-2">
+                      {appt.status?.description !== 'CANCELLED' && (
+                        <OverlayTrigger placement="top" overlay={<Tooltip>Edit Appointment</Tooltip>}>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => {
+                              setEditAppt(appt);
+                              setShowModal(true);
+                              setModalError('');
+                            }}
+                          >
+                            <FiEdit size={20} />
+                          </Button>
+                        </OverlayTrigger>
+                      )}
+                      {appt.status_id !== 2 && (
+                        <OverlayTrigger placement="top" overlay={<Tooltip>Cancel Appointment</Tooltip>}>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-warning"
+                            onClick={() => {
+                              setApptToCancel(appt);
+                              setShowCancelModal(true);
+                            }}
+                          >
+                            <FiX size={22} />
+                          </Button>
+                        </OverlayTrigger>
+                      )}
+                      <OverlayTrigger placement="top" overlay={<Tooltip>Delete Appointment</Tooltip>}>
                         <Button
                           variant="link"
                           size="sm"
+                          className="text-danger"
                           onClick={() => {
-                            setEditAppt(appt);
-                            setShowModal(true);
-                            setModalError('');
+                            setApptToDelete(appt);
+                            setShowDeleteModal(true);
                           }}
                         >
-                          <FiEdit size={20} />
+                          <FiTrash2 size={20} />
                         </Button>
                       </OverlayTrigger>
-                    )}
-                    {appt.status_id !== 2 && (
-                      <OverlayTrigger placement="top" overlay={<Tooltip>Cancel Appointment</Tooltip>}>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="text-warning"
-                          onClick={() => {
-                            setApptToCancel(appt);
-                            setShowCancelModal(true);
-                          }}
-                        >
-                          <FiX size={22} />
-                        </Button>
-                      </OverlayTrigger>
-                    )}
-                    <OverlayTrigger placement="top" overlay={<Tooltip>Delete Appointment</Tooltip>}>
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="text-danger"
-                        onClick={() => {
-                          setApptToDelete(appt);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        <FiTrash2 size={20} />
-                      </Button>
-                    </OverlayTrigger>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </Table>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </Table>  
+      </div>
+
 
       <div className="d-flex justify-content-center mt-3">
         <Button
