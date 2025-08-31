@@ -3,7 +3,6 @@ import { Form, Button, Container, Row, Col, Alert, Card, Spinner, Image, Modal }
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import toothImage from '../images/dental.jpeg';
-import CryptoJS from 'crypto-js';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -21,11 +20,7 @@ const Register = () => {
     setError('');
 
     try {
-      const hashedPassword = CryptoJS.SHA256(formData.password).toString();
-      await API.post('/register', {
-        ...formData,
-        password: hashedPassword
-      });
+      await API.post('/register', formData);
       setFormData({ name: '', email: '', password: '' });
       setShowModal(true); // show confirmation modal
     } catch (err) {
