@@ -3,6 +3,7 @@ import { useState } from 'react';
 import API from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import toothImage from '../images/dental.jpeg';
+import CryptoJS from 'crypto-js';
 
 
 export default function Login() {
@@ -19,7 +20,13 @@ export default function Login() {
         setError('');
 
         try {
-            const response = await API.post('/login', formData);
+            const hashedPassword = CryptoJS.SHA256(formData.password).toString();
+
+            const response = await API.post('/login', {
+                email: formData.email,
+                password: hashedPassword
+            });
+            
             const { token, user } = response.data;
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
