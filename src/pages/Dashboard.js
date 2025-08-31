@@ -244,6 +244,7 @@ const Dashboard = () => {
         <thead className="text-center">
           <tr>
             <th>Dentist</th>
+            <th>Specialization</th>
             <th>Email</th>
             <th>Status</th>
             <th>Date</th>
@@ -266,7 +267,8 @@ const Dashboard = () => {
                   : 'table-light';
               return (
                 <tr key={appt.id} className={rowClass}>
-                  <td>{appt.dentist?.name - appt.dentist?.specialization}</td>
+                  <td>{appt.dentist?.name}</td>
+                  <td>{appt.dentist?.specialization}</td>
                   <td>{appt.dentist?.email}</td>
                   <td>{appt.status?.description || 'Unknown'}</td>
                   <td>{formatDate(appt.date)}</td>
