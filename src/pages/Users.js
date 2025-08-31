@@ -113,47 +113,48 @@ const Users = () => {
       <Button variant="outline-secondary" onClick={() => openForm()}>
         <FiPlus /> Create User
       </Button>
-
-      <Table hover className="mt-3 text-center">
-        <thead>
-          <tr>
-            <th className="text-center">Name</th>
-            <th className="text-center">Email</th>
-            <th className="text-center">Admin</th>
-            <th className="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.length === 0 ? (
+      <div className='table-responsive'>
+        <Table hover className="mt-3 text-center">
+          <thead>
             <tr>
-              <td colSpan="4" className="text-center">No users found</td>
+              <th className="text-center">Name</th>
+              <th className="text-center">Email</th>
+              <th className="text-center">Admin</th>
+              <th className="text-center">Actions</th>
             </tr>
-          ) : (
-            users.map(u => (
-              <tr key={u.id}>
-                <td className="align-middle">{u.name}</td>
-                <td className="align-middle">{u.email}</td>
-                <td className="align-middle">{u.isAdmin ? '✓' : '✗'}</td>
-                <td className="align-middle">
-                  <div className="d-flex justify-content-center gap-2">
-                    {
-                      u.email !== 'eilonblanche23@gmail.com' ? 
-                      <>
-                        <Button variant="link" onClick={() => openForm(u)}>
-                          <FiEdit size={20} />
-                        </Button>
-                        <Button variant="link" onClick={() => { setUserToDelete(u); setShowDeleteModal(true); }}>
-                          <FiTrash2 size={20} className="text-danger" />
-                        </Button>
-                      </> : null
-                    }
-                  </div>
-                </td>
+          </thead>
+          <tbody>
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="text-center">No users found</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </Table>
+            ) : (
+              users.map(u => (
+                <tr key={u.id}>
+                  <td className="align-middle">{u.name}</td>
+                  <td className="align-middle">{u.email}</td>
+                  <td className="align-middle">{u.isAdmin ? '✓' : '✗'}</td>
+                  <td className="align-middle">
+                    <div className="d-flex justify-content-center gap-2">
+                      {
+                        u.email !== 'eilonblanche23@gmail.com' ? 
+                        <>
+                          <Button variant="link" onClick={() => openForm(u)}>
+                            <FiEdit size={20} />
+                          </Button>
+                          <Button variant="link" onClick={() => { setUserToDelete(u); setShowDeleteModal(true); }}>
+                            <FiTrash2 size={20} className="text-danger" />
+                          </Button>
+                        </> : null
+                      }
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </Table>
+      </div>
 
 
       <FormModal

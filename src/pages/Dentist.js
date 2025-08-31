@@ -128,48 +128,49 @@ const Dentists = () => {
       >
         <FiPlus /> Create Dentist
       </Button>
-
-      <Table hover className="mt-3 text-center">
-        <thead>
-          <tr>
-            <th className="text-center">Name</th>
-            <th className="text-center">Email</th>
-            <th className="text-center">Specialization</th>
-            <th className="text-center">Schedule</th>
-            <th className="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dentists.length === 0 ? (
+      <div className="table-responsive">
+        <Table hover className="mt-3 text-center">
+          <thead>
             <tr>
-              <td colSpan="5" className="text-center">No dentists found</td>
+              <th className="text-center">Name</th>
+              <th className="text-center">Email</th>
+              <th className="text-center">Specialization</th>
+              <th className="text-center">Schedule</th>
+              <th className="text-center">Actions</th>
             </tr>
-          ) : (
-            dentists.map(d => (
-              <tr key={d.id}>
-                <td className="align-middle">{d.name}</td>
-                <td className="align-middle">{d.email || '-'}</td>
-                <td className="align-middle">{d.specialization || '-'}</td>
-                <td className="align-middle">
-                  {d.availableStart && d.availableEnd
-                    ? `${formatTimeLabel(d.availableStart)} - ${formatTimeLabel(d.availableEnd)}`
-                    : '-'}
-                </td>
-                <td className="align-middle">
-                  <div className="d-flex justify-content-center gap-2">
-                    <Button variant="link" onClick={() => openForm(d)}>
-                      <FiEdit size={20} />
-                    </Button>
-                    <Button variant="link" onClick={() => { setDentistToDelete(d); setShowDeleteModal(true); }}>
-                      <FiTrash2 size={20} className="text-danger" />
-                    </Button>
-                  </div>
-                </td>
+          </thead>
+          <tbody>
+            {dentists.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-center">No dentists found</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </Table>
+            ) : (
+              dentists.map(d => (
+                <tr key={d.id}>
+                  <td className="align-middle">{d.name}</td>
+                  <td className="align-middle">{d.email || '-'}</td>
+                  <td className="align-middle">{d.specialization || '-'}</td>
+                  <td className="align-middle">
+                    {d.availableStart && d.availableEnd
+                      ? `${formatTimeLabel(d.availableStart)} - ${formatTimeLabel(d.availableEnd)}`
+                      : '-'}
+                  </td>
+                  <td className="align-middle">
+                    <div className="d-flex justify-content-center gap-2">
+                      <Button variant="link" onClick={() => openForm(d)}>
+                        <FiEdit size={20} />
+                      </Button>
+                      <Button variant="link" onClick={() => { setDentistToDelete(d); setShowDeleteModal(true); }}>
+                        <FiTrash2 size={20} className="text-danger" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </Table>
+      </div>
 
 
       {/* Form Modal */}
