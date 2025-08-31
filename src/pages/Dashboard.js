@@ -265,8 +265,8 @@ const Dashboard = () => {
                   : 'table-light';
               return (
                 <tr key={appt.id} className={rowClass}>
-                  <td>{appt.dentist?.name - appt.dentist?.specialization || 'Unknown'}</td>
-                  <td>{appt.status?.description || 'Unknown'}</td>
+                  <td>{appt.dentist?.name} - {appt.dentist?.specialization}</td>
+                  <td>{appt.status?.description}</td>
                   <td>{formatDate(appt.date)}</td>
                   <td colSpan="2">
                     {formatTimeLabel(appt.timeFrom)} - {formatTimeLabel(appt.timeTo)}
