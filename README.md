@@ -1,4 +1,4 @@
-# Dental Appointment Frontend
+# Dental Office Frontend
 
 This is the **frontend application** for a **Dental Office** appointment booking system. Built with **React** and **Bootstrap**, it provides a responsive and intuitive interface for users to schedule dental checkups easily.
 
